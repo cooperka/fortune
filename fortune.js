@@ -1,6 +1,6 @@
 /*!
  * Fortune.js
- * Version 5.3.0
+ * Version 5.3.1
  * MIT License
  * http://fortune.js.org
  */
@@ -2444,7 +2444,7 @@ function dispatch (options) {
 
   // This makes sure to call `endTransaction` before re-throwing the error.
     .catch(function (error) {
-      return 'transaction' in context ?
+      return 'transaction' in context && !hasTransaction ?
         context.transaction.endTransaction(error)
           .then(throwError, throwError) :
         throwError()
