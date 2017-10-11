@@ -1,6 +1,6 @@
 /*!
  * Fortune.js
- * Version 5.3.1
+ * Version 5.4.0
  * MIT License
  * http://fortune.js.org
  */
@@ -1252,7 +1252,10 @@ var privateKeys = [
   'updateRecord',
 
   // Used to map update objects to a hash of linked records.
-  'linkedHash'
+  'linkedHash',
+
+  // Used to include find records in `meta` for update and delete requests.
+  'findRecords'
 ]
 
 // The primary key that must exist per record, can not be user defined.
@@ -1440,6 +1443,7 @@ exports.link = constants.link
 exports.isArray = constants.isArray
 exports.inverse = constants.inverse
 exports.denormalizedInverse = constants.denormalizedInverse
+exports.findRecords = constants.findRecords
 
 },{"./constants":18}],25:[function(require,module,exports){
 'use strict'
@@ -1901,6 +1905,7 @@ var primaryKey = constants.primary
 var linkKey = constants.link
 var inverseKey = constants.inverse
 var isArrayKey = constants.isArray
+var findRecordsKey = constants.findRecords
 
 
 /**
@@ -1943,6 +1948,10 @@ module.exports = function (context) {
 
       Object.defineProperty(context.response, 'records', {
         configurable: true,
+        value: records
+      })
+
+      Object.defineProperty(meta, findRecordsKey, {
         value: records
       })
 
@@ -2535,6 +2544,7 @@ var isArrayKey = constants.isArray
 var denormalizedInverseKey = constants.denormalizedInverse
 var updateRecordKey = constants.updateRecord
 var linkedHashKey = constants.linkedHash
+var findRecordsKey = constants.findRecords
 
 
 /**
@@ -2594,6 +2604,10 @@ module.exports = function (context) {
     .then(function (records) {
       if (records.length < updates.length)
         throw new NotFoundError(message('UpdateRecordMissing', language))
+
+      Object.defineProperty(meta, findRecordsKey, {
+        value: records
+      })
 
       return Promise.all(map(records, function (record) {
         var update, cloneUpdate
@@ -3393,8 +3407,10 @@ Fortune.prototype.constructor = function Fortune (recordTypes, options) {
  *   options in the adapter. These options do not apply on methods other than
  *   `find`, and do not affect the records returned from `include`. Optional.
  *
- * - `meta`: Meta-information object of the request. Optional.
- *
+ * - `meta`: Meta-information object of the request. For `update` and `delete`
+ *   requests, this will contain `findRecords` with results of `find` called 
+ *   during validation of record existence. Optional.
+ * 
  * - `payload`: Payload of the request. **Required** for `create` and `update`
  *   methods only, and must be an array of objects. The objects must be the
  *   records to create, or update objects as expected by the Adapter.
